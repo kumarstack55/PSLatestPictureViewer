@@ -90,6 +90,11 @@ class LruCache {
     [Picture] Get([string]$Key) {
         return $this.Cache[$Key]
     }
+    RemoveLatest() {
+        $Key = $this.OrderList[$this.OrderList.Count - 1]
+        $this.OrderList.Remove($Key)
+        $this.Cache.Remove($Key)
+    }
 }
 
 # 複数のピクチャ
@@ -109,6 +114,9 @@ class Pictures {
             $this.LruCache.Update($FilePath, $Picture)
         }
         return $this.LruCache.Get($FilePath)
+    }
+    RemoveLatestItemFromCache() {
+        $this.LruCache.RemoveLatest()
     }
 }
 
