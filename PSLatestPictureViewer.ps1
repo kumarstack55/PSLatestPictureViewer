@@ -71,14 +71,11 @@ class LruCache {
         $this.Capacity = $Capacity
         $this.RemoveScriptBlock = $RemoveScriptBlock
     }
-    hidden [string]GetOldestKey() {
-        return $this.OrderList[0]
-    }
     Update([string]$Key, [Picture]$Value) {
         if ($this.Cache.ContainsKey($Key)) {
             $this.OrderList.Remove($Key)
         } elseif ($this.Cache.Count -ge $this.Capacity) {
-            $Key = $this.GetOldestKey()
+            $Key = $this.OrderList[0]
             $Value = $this.Cache[$Key]
             Invoke-Command -ScriptBlock $this.RemoveScriptBlock -ArgumentList $Key, $Value
 
