@@ -3,17 +3,20 @@
 # 定数
 $InitialFormWidth = 1024
 $InitialFormHeight = 768
-$MiniThumbnailWidth = 200
+$MiniThumbnailWidth = 190
 $MiniThumbnailHeight = 100
 $IntervalInMilliseconds = 2000
-$NumberOfPicturesToDisplay = 20
+$NumberOfPicturesToDisplay = 1+5
 $LabelTextNoInfo = "(no info)"
 
 # 変数
 [Pictures]$global:Pictures = $null
-[Picture]$global:LatestPicture = $null
-$global:PictureBoxList = [System.Collections.Generic.List[object]]::new()
-$global:LabelList = [System.Collections.Generic.List[object]]::new()
+$global:CompornentRecords = [System.Collections.Generic.List[CompornentRecord]]::new()
+$global:Form = $null
+$global:LastPositionX = $null
+$global:LastPositionY = $null
+$global:LastWidth = $null
+$global:LastHeight = $null
 
 # Drawing.Image の処理を関数で定義する。
 # PowerShell のクラス内で Add-Type した型を利用できないため。
@@ -21,6 +24,11 @@ $global:LabelList = [System.Collections.Generic.List[object]]::new()
 function New-ImageFromMemoryStream {
     param([Parameter(Mandatory)]$MemoryStream)
     [System.Drawing.Image]::FromStream($MemoryStream)
+}
+
+function Write-CustomHost {
+    param([Parameter(Mandatory)][string]$Message)
+    Write-Host ("PID:{0} {1}" -f $PID, $Message)
 }
 
 # ピクチャ
@@ -120,6 +128,16 @@ class Pictures {
     }
 }
 
+class CompornentRecord {
+    [Picture]$Picture
+    $Index
+    $Panel
+    $Label
+    $PictureBox
+    $Button
+    $Block
+}
+
 function Get-LatestItemsInPictures {
     param([int]$Count = -1)
 
@@ -134,22 +152,25 @@ function Get-LatestItemsInPictures {
     }
 }
 
-function New-ViewerForm {
-    $Form = New-Object System.Windows.Forms.Form
-    $Form.Text = "Latest Images in Pictures"
-    $Form.Width = $InitialFormWidth
-    $Form.Height = $InitialFormHeight
+function New-CustomPanelControl {
+    param([Parameter(Mandatory)][CompornentRecord]$CompornentRecord)
 
-    # Fill を最初に Add() する。
-    # Top や Bottom より後に Fill を Add() すると、Panel 内の PictureBox の上側、下側が欠損してしまう。これを回避する。
-    $Form.Controls.Add(
+    $CompornentRecord.Panel = New-Object System.Windows.Forms.Panel
+    $CompornentRecord.PictureBox = New-Object System.Windows.Forms.PictureBox
+    $CompornentRecord.Label = New-Object System.Windows.Forms.Label
+    $CompornentRecord.Button = New-Object System.Windows.Forms.Button
+
+    $c = $CompornentRecord.Panel
+    $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
+    $c.Controls.Add(
         (&{
             $c = New-Object System.Windows.Forms.Panel
             $c.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $c.AutoSize = $true
+            $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
             $c.Controls.Add(
                 (&{
-                    $c = New-Object System.Windows.Forms.PictureBox
-                    $global:PictureBoxList.Add($c)
+                    $c = $CompornentRecord.PictureBox
                     $c.Dock = [System.Windows.Forms.DockStyle]::Fill
                     $c.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
                     $c
@@ -157,75 +178,67 @@ function New-ViewerForm {
             )
             $c.Controls.Add(
                 (&{
-                    $c = New-Object System.Windows.Forms.Label
-                    $global:LabelList.Add($c)
-                    $c.Dock = [System.Windows.Forms.DockStyle]::Bottom
-                    $c.AutoSize = $false
+                    $c = $CompornentRecord.Label
+                    $c.Dock = [System.Windows.Forms.DockStyle]::Top
                     $c.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+                    $c.BackColor = [System.Drawing.Color]::AliceBlue
                     $c.Text = $LabelTextNoInfo
                     $c
                 })
             )
-            $c
-        })
-    )
-
-    $Form.Controls.Add(
-        (&{
-            $c = New-Object System.Windows.Forms.FlowLayoutPanel
-            $c.Dock = [System.Windows.Forms.DockStyle]::Top
-            $c.AutoSize = $true
             $c.Controls.Add(
                 (&{
-                    $c = New-Object System.Windows.Forms.Button
+                    $c = $CompornentRecord.Button
                     $c.Text = "画像をごみ箱に入れる"
-                    $c.AutoSize = $true
-                    $c.Add_Click({
-                        if ($null -ne $global:LatestPicture) {
-                            $Shell = New-Object -ComObject Shell.Application
-                            $Folder = $Shell.Namespace($global:LatestPicture.DirectoryPath)
-                            $Item = $Folder.ParseName($global:LatestPicture.FileName)
-                            $Item.InvokeVerb("delete")
-                        }
-                    })
+                    $c.Dock = [System.Windows.Forms.DockStyle]::Bottom
+                    $c.Enabled = $false
+                    $c.Add_Click($CompornentRecord.Block)
                     $c
                 })
             )
             $c
         })
     )
+    $c
+}
 
+function New-ViewerForm {
+    $Form = New-Object System.Windows.Forms.Form
+    $Form.Text = "Latest Images in Pictures"
+    if ($null -ne $global:LastPositionX) {
+        $Form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
+        $Form.Left = $global:LastPositionX
+        $Form.Top = $global:LastPositionY
+    }
+
+    if ($null -ne $global:LastWidth) {
+        $Form.Width = $global:LastWidth
+        $Form.Height = $global:LastHeight
+    } else {
+        $Form.Width = $InitialFormWidth
+        $Form.Height = $InitialFormHeight
+    }
+
+    $CompornentRecord = $global:CompornentRecords[0]
+    $Form.Controls.Add( (&{
+            $c = New-CustomPanelControl -CompornentRecord $CompornentRecord
+            $c.Dock = [System.Windows.Forms.DockStyle]::Fill
+            $c
+        })
+    )
     $Form.Controls.Add(
         (&{
             $c = New-Object System.Windows.Forms.FlowLayoutPanel
             $c.Dock = [System.Windows.Forms.DockStyle]::Bottom
-
-            foreach ($_ in 2 .. $NumberOfPicturesToDisplay) {
+            $c.AutoSize = $true
+            $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
+            foreach ($Index in 1 .. ($NumberOfPicturesToDisplay - 1)) {
+                $CompornentRecord = $global:CompornentRecords[$Index]
                 $c.Controls.Add(
                     (&{
-                        $c = New-Object System.Windows.Forms.Panel
+                        $c = New-CustomPanelControl -CompornentRecord $CompornentRecord
                         $c.Width = $MiniThumbnailWidth
                         $c.Height = $MiniThumbnailHeight
-                        $c.Controls.Add(
-                            (&{
-                                $c = New-Object System.Windows.Forms.PictureBox
-                                $c.Dock = [System.Windows.Forms.DockStyle]::Fill
-                                $c.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
-                                $global:PictureBoxList.Add($c)
-                                $c
-                            })
-                        )
-                        $c.Controls.Add(
-                            (&{
-                                $c = New-Object System.Windows.Forms.Label
-                                $global:LabelList.Add($c)
-                                $c.Dock = [System.Windows.Forms.DockStyle]::Bottom
-                                $c.AutoSize = $false
-                                $c.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-                                $c.Text = $LabelTextNoInfo
-                                $c
-                            })
-                        )
                         $c
                     })
                 )
@@ -234,39 +247,64 @@ function New-ViewerForm {
         })
     )
 
+    $Form.Add_Move({
+        $Position = $Form.Location
+        Write-CustomHost "Window moved to X: $($Position.X), Y: $($Position.Y)"
+        $global:LastPositionX = $Position.X
+        $global:LastPositionY = $Position.Y
+    })
+
+    $Form.Add_Resize({
+        $Size = $Form.Size
+        Write-CustomHost "Window resized to Width: $($Size.Width), Height: $($Size.Height)"
+        $global:LastWidth = $Size.Width
+        $global:LastHeight = $Size.Height
+    })
+
     $Form
 }
 
 function Invoke-Tick {
+    Write-CustomHost "Invoke-Tick called."
+
     # 最近の画像を最大 $NumberOfPicturesToDisplay 件、得る。
     $Items = Get-LatestItemsInPictures -Count $NumberOfPicturesToDisplay
 
     # 画像、ラベルを設定する。
     foreach ($Index in 0 .. ($NumberOfPicturesToDisplay - 1)) {
-        $PictureBox = $PictureBoxList[$Index]
-        $Label = $LabelList[$Index]
-
+        $CompornentRecord = $global:CompornentRecords[$Index]
+        $PictureBox = $CompornentRecord.PictureBox
+        $Label = $CompornentRecord.Label
+        $Button = $CompornentRecord.Button
         if ($Index -lt $Items.Count) {
             $Item = $Items[$Index]
             $Picture = $global:Pictures.GetPicture($Item)
-            if ($Index -eq 0) {
-                $global:LatestPicture = $Picture
-            }
+            $CompornentRecord.Picture = $Picture
 
+            $LabelText = "{0}: {1}" -f ($Index + 1), $Picture.FileName
+            $Label.Text = $LabelText
+
+            # 期待した動作とならない場合は Form を作り直す。
+            # 特に 1 tick 内に複数の画像が追加あるいは削除されたときに例外が発生しそうだが原因はわかってない。
+            # 出力中の未完全な画像や、削除中の画像を読んでいるため？
             try {
                 $PictureBox.Image = $Picture.Image
             } catch {
                 Write-Host $_.ScriptStackTrace
+
+                $global:Pictures.RemoveLatestItemFromCache()
+
+                Write-CustomHost "Set NeedRestarting is true."
+                $global:NeedRestarting = $true
+
+                $global:Form.Close()
             }
 
-            $LabelText = "{0}: {1}" -f ($Index + 1), $Picture.FileName
-            $Label.Text = $LabelText
+            $Button.Enabled = $true
         } else {
-            if ($Index -eq 0) {
-                $global:LatestPicture = $null
-            }
             $PictureBox.Image = $null
             $Label.Text = ""
+            $Button.Enabled = $false
         }
     }
 }
@@ -283,12 +321,43 @@ function Invoke-Application {
     $CacheSize = [System.Math]::Ceiling($NumberOfPicturesToDisplay * 1.5)
     $global:Pictures = [Pictures]::new($CacheSize)
 
-    Write-Host "Current PowerShell process ID: ${PID}"
+    foreach ($Index in 0 .. ($NumberOfPicturesToDisplay - 1)) {
+        $Block = {
+            Write-CustomHost "block is invoked. (Index:$Index)"
+            $Shell = New-Object -ComObject Shell.Application
+            $CompornentRecord = $global:CompornentRecords[$Index]
 
-    $Form = New-ViewerForm
-    $Timer = New-ViewerTimer
+            $Picture = $CompornentRecord.Picture
+            if ($null -eq $Picture) {
+                Write-CustomHost "Picture is null."
+                return
+            }
 
-    $Timer.Start()
+            $Folder = $Shell.Namespace($Picture.DirectoryPath)
+            if ($null -eq $Folder) {
+                Write-CustomHost "Folder is null."
+                return
+            }
+
+            $Item = $Folder.ParseName($Picture.FileName)
+            if ($null -eq $Item) {
+                Write-CustomHost "Item is null."
+                return
+            }
+
+            $Item.InvokeVerb("delete")
+        }
+        $Closure = $Block.GetNewClosure()
+
+        $CompornentRecord = [CompornentRecord]::new()
+        $CompornentRecord.Picture = $null
+        $CompornentRecord.Label = $null
+        $CompornentRecord.Index = $Index
+        $CompornentRecord.Block = $Closure
+        $global:CompornentRecords.Add($CompornentRecord)
+    }
+
+    $global:Form = New-ViewerForm
 
     # フォームを表示する前に、画像を更新しておく。
     Invoke-Tick
@@ -296,4 +365,20 @@ function Invoke-Application {
     [System.Windows.Forms.Application]::Run($Form)
 }
 
+Write-Host "Current PowerShell process ID: ${PID}"
+
+$Timer = New-ViewerTimer
+$Timer.Start()
+
+$global:NeedRestarting = $false
+Write-Host "Starting Application..."
 Invoke-Application
+while ($global:NeedRestarting) {
+    Write-Host "Restarting Application..."
+    $global:NeedRestarting = $false
+    Invoke-Application
+    Write-Host "Terminated."
+    Start-Sleep 1
+}
+
+[System.Windows.Forms.Application]::Exit()
