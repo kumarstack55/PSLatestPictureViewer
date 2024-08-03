@@ -16,7 +16,7 @@
 ```powershell
 git clone https://github.com/kumarstack55/PSLatestPictureViewer.git
 Set-Location .\PSLatestPictureViewer\
-powershell -NoProfile -File .\PSLatestPictureViewer.ps1
+.\Invoke-App.ps1
 ```
 
 ## TODO
