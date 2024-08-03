@@ -80,7 +80,6 @@ class LruCache {
             Invoke-Command -ScriptBlock $this.RemoveScriptBlock -ArgumentList $Key, $Value
 
             $this.OrderList.RemoveAt(0)
-            $this.Cache.Remove($Key)
         }
         $this.Cache[$Key] = $Value
         $this.OrderList.Add($Key)
