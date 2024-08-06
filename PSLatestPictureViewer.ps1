@@ -149,6 +149,7 @@ class Pictures {
     }
 }
 
+# 画面を構成するピクチャを含む各種オブジェクトのレコード
 class CompornentRecord {
     [Picture]$Picture
     $Index
