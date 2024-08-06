@@ -102,8 +102,15 @@ class LruCache {
     }
     RemoveLatest() {
         $Key = $this.OrderList[$this.OrderList.Count - 1]
+        $Value = $this.Cache[$Key]
+        Invoke-Command -ScriptBlock $this.RemoveScriptBlock -ArgumentList $Key, $Value
         $this.OrderList.Remove($Key)
         $this.Cache.Remove($Key)
+    }
+    RemoveAll() {
+        while ($this.OrderList.Count -gt 0) {
+            $this.RemoveLatest()
+        }
     }
 }
 
@@ -127,6 +134,9 @@ class Pictures {
     }
     RemoveLatestItemFromCache() {
         $this.LruCache.RemoveLatest()
+    }
+    RemoveAllItemsFromCache() {
+        $this.LruCache.RemoveAll()
     }
 }
 
@@ -322,6 +332,9 @@ function New-ViewerTimer {
 function Invoke-Application {
     # 表示する画像数より十分に大きい数をキャッシュ対象とする。
     $CacheSize = [System.Math]::Ceiling($NumberOfPicturesToDisplay * 1.5)
+    if ($null -ne $global:Pictures) {
+        $global:Pictures.RemoveAllItemsFromCache()
+    }
     $global:Pictures = [Pictures]::new($CacheSize)
 
     foreach ($Index in 0 .. ($NumberOfPicturesToDisplay - 1)) {
