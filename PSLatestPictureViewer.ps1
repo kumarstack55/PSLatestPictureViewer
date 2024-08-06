@@ -265,7 +265,7 @@ function New-ViewerForm {
 }
 
 function Invoke-Tick {
-    Write-CustomHost "Invoke-Tick called."
+    Write-CustomHost "Invoke-Tick is called."
 
     # 最近の画像を最大 $NumberOfPicturesToDisplay 件、得る。
     $Items = Get-LatestItemsInPictures -Count $NumberOfPicturesToDisplay
