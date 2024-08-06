@@ -394,11 +394,9 @@ Write-Host "Current PowerShell process ID: ${PID}"
 $Timer = New-ViewerTimer
 $Timer.Start()
 
-$global:NeedRestarting = $false
-Write-Host "Starting Application..."
-Invoke-Application
+$global:NeedRestarting = $true
 while ($global:NeedRestarting) {
-    Write-Host "Restarting Application..."
+    Write-Host "Starting Application..."
     $global:NeedRestarting = $false
     Invoke-Application
     Write-Host "Terminated."
