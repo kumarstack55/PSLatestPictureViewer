@@ -3,10 +3,10 @@
 # 定数
 $InitialFormWidth = 1024
 $InitialFormHeight = 768
-$MiniThumbnailWidth = 190
+$MiniThumbnailWidth = 200
 $MiniThumbnailHeight = 100
 $IntervalInMilliseconds = 2000
-$NumberOfPicturesToDisplay = 1+5
+$NumberOfPicturesToDisplay = 1+20
 $LabelTextNoInfo = "(no info)"
 
 # 変数
@@ -148,7 +148,7 @@ function Get-LatestItemsInPictures {
     if ($Count -eq -1) {
         $SortedItems
     } else {
-        $SortedItems[0 .. ($Count - 1)]
+        $SortedItems | Select-Object -First $Count
     }
 }
 
