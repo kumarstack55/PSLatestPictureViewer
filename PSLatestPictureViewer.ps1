@@ -11,7 +11,7 @@ $LabelTextNoInfo = "(no info)"
 
 # 変数
 [Pictures]$global:Pictures = $null
-$global:CompornentRecords = [System.Collections.Generic.List[CompornentRecord]]::new()
+$global:CompornentRecords = $null
 $global:Form = $null
 $global:LastPositionX = $null
 $global:LastPositionY = $null
@@ -338,6 +338,8 @@ function New-ViewerTimer {
 }
 
 function Invoke-Application {
+    $global:CompornentRecords = [System.Collections.Generic.List[CompornentRecord]]::new()
+
     # 表示する画像数より十分に大きい数をキャッシュ対象とする。
     $CacheSize = [System.Math]::Ceiling($NumberOfPicturesToDisplay * 1.5)
     if ($null -ne $global:Pictures) {
