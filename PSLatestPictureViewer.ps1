@@ -307,8 +307,6 @@ function Invoke-Tick {
             $Label.Text = $LabelText
 
             # 期待した動作とならない場合は Form を作り直す。
-            # 特に 1 tick 内に複数の画像が追加あるいは削除されたときに例外が発生しそうだが原因はわかってない。
-            # 出力中の未完全な画像や、削除中の画像を読んでいるため？
             try {
                 $PictureBox.Image = $Picture.Image
             } catch {
