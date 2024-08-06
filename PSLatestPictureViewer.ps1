@@ -36,11 +36,13 @@ class Picture {
     [string]$FilePath
     [string]$DirectoryPath
     [string]$FileName
+    [System.DateTime]$LastWriteTime
     hidden $Image
-    Picture([string]$FilePath, [string]$DirectoryPath, [string]$FileName, $Image) {
+    Picture([string]$FilePath, [string]$DirectoryPath, [string]$FileName, [System.DateTime]$LastWriteTime, $Image) {
         $this.FilePath = $FilePath
         $this.DirectoryPath = $DirectoryPath
         $this.FileName = $FileName
+        $this.LastWriteTime = $LastWriteTime
         $this.Image = $Image
     }
     Dispose() {
@@ -57,6 +59,7 @@ class PictureFactory {
         $FilePath = $Item.FullName
         $DirectoryPath = $Item.Directory.FullName
         $FileName = $Item.Name
+        $LastWriteTime = $Item.LastWriteTime
 
         $ImageStream = [System.IO.File]::OpenRead($Item.FullName)
         $MemoryStream = New-Object System.IO.MemoryStream
@@ -65,7 +68,7 @@ class PictureFactory {
         $MemoryStream.Position = 0
         $Image = New-ImageFromMemoryStream -MemoryStream $MemoryStream
 
-        return [Picture]::new($FilePath, $DirectoryPath, $FileName, $Image)
+        return [Picture]::new($FilePath, $DirectoryPath, $FileName, $LastWriteTime, $Image)
     }
 }
 
@@ -126,7 +129,13 @@ class Pictures {
     }
     [Picture] GetPicture([System.IO.FileInfo]$Item) {
         $FilePath = $Item.FullName
-        if (-not $this.LruCache.ContainsKey($FilePath)) {
+        if ($this.LruCache.ContainsKey($FilePath)) {
+            $Picture = $this.LruCache.Get($FilePath)
+            if ($Item.LastWriteTime -gt $Picture.LastWriteTime) {
+                $Picture = [PictureFactory]::CreatePicture($Item)
+                $this.LruCache.Update($FilePath, $Picture)
+            }
+        } else {
             $Picture = [PictureFactory]::CreatePicture($Item)
             $this.LruCache.Update($FilePath, $Picture)
         }
