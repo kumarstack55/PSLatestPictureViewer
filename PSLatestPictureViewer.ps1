@@ -81,13 +81,15 @@ class LruCache {
     }
     Update([string]$Key, [Picture]$Value) {
         if ($this.Cache.ContainsKey($Key)) {
+            $OldValue = $this.Cache[$Key]
+            Invoke-Command -ScriptBlock $this.RemoveScriptBlock -ArgumentList $Key, $OldValue
             $this.OrderList.Remove($Key)
         } elseif ($this.Cache.Count -ge $this.Capacity) {
-            $Key = $this.OrderList[0]
-            $Value = $this.Cache[$Key]
-            Invoke-Command -ScriptBlock $this.RemoveScriptBlock -ArgumentList $Key, $Value
-
-            $this.OrderList.RemoveAt(0)
+            $ExpiredKey = $this.OrderList[0]
+            $ExpiredValue = $this.Cache[$ExpiredKey]
+            Invoke-Command -ScriptBlock $this.RemoveScriptBlock -ArgumentList $ExpiredKey, $ExpiredValue
+            $this.OrderList.Remove($ExpiredKey)
+            $this.Cache.Remove($ExpiredKey)
         }
         $this.Cache[$Key] = $Value
         $this.OrderList.Add($Key)
