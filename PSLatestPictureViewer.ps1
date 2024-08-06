@@ -232,6 +232,7 @@ function New-ViewerForm {
             $c.Dock = [System.Windows.Forms.DockStyle]::Bottom
             $c.AutoSize = $true
             $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
+            $c.WrapContents = $false
             foreach ($Index in 1 .. ($NumberOfPicturesToDisplay - 1)) {
                 $CompornentRecord = $global:CompornentRecords[$Index]
                 $c.Controls.Add(
