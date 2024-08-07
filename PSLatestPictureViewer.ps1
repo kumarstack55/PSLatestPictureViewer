@@ -293,8 +293,6 @@ function New-ViewerForm {
 }
 
 function Update-AllCustomPanels {
-    Write-CustomHost "Update-AllCustomPanels is called."
-
     # 最近の画像を最大 $NumberOfPicturesToDisplay 件、得る。
     $Items = Get-LatestItemsInPictures -Count $NumberOfPicturesToDisplay
 
@@ -333,7 +331,7 @@ function Update-AllCustomPanels {
 function New-ViewerTimer {
     $Timer = New-Object System.Windows.Forms.Timer
     $Timer.Interval = $IntervalInMilliseconds
-    $Timer.Add_Tick({ Update-AllCustomPanels })
+    $Timer.Add_Tick({ Write-CustomHost "Interval Timer: Calling Update-AllCustomPanels..."; Update-AllCustomPanels; })
     $Timer
 }
 
@@ -398,10 +396,22 @@ $PathToWatch = Get-MyPicturesFolderPath
 $Watcher = New-Object System.IO.FileSystemWatcher
 $Watcher.Path = $PathToWatch
 $Watcher.EnableRaisingEvents = $true
-Register-ObjectEvent $Watcher Created -SourceIdentifier FileCreated -Action { Write-CustomHost "Action: Created"; Update-AllCustomPanels: } | Out-Null
-Register-ObjectEvent $Watcher Changed -SourceIdentifier FileChanged -Action { Write-CustomHost "Action: Changed"; Update-AllCustomPanels; } | Out-Null
-Register-ObjectEvent $Watcher Deleted -SourceIdentifier FileDeleted -Action { Write-CustomHost "Action: Deleted"; Update-AllCustomPanels; } | Out-Null
-Register-ObjectEvent $Watcher Renamed -SourceIdentifier FileRenamed -Action { Write-CustomHost "Action: Renamed"; Update-AllCustomPanels; } | Out-Null
+Register-ObjectEvent $Watcher Created -SourceIdentifier FileCreated -Action {
+    Write-CustomHost "Action: Created: Calling Update-AllCustomPanels..."
+    Update-AllCustomPanels
+} | Out-Null
+Register-ObjectEvent $Watcher Changed -SourceIdentifier FileChanged -Action {
+    Write-CustomHost "Action: Changed: Calling Update-AllCustomPanels..."
+    Update-AllCustomPanels
+} | Out-Null
+Register-ObjectEvent $Watcher Deleted -SourceIdentifier FileDeleted -Action {
+    Write-CustomHost "Action: Deleted: Calling Update-AllCustomPanels..."
+    Update-AllCustomPanels
+} | Out-Null
+Register-ObjectEvent $Watcher Renamed -SourceIdentifier FileRenamed -Action {
+    Write-CustomHost "Action: Renamed: Calling Update-AllCustomPanels..."
+    Update-AllCustomPanels
+} | Out-Null
 
 # FileSystemWatcher に加えて、タイマーで定期的に変更を検知する。
 # 別のプロセスがピクチャ・ファイルに変更を加えるとき、FileSystemWatcher がイベントを通知するタイミングが、
