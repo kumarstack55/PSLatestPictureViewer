@@ -398,6 +398,20 @@ function Invoke-Application {
 
 Write-Host "Current PowerShell process ID: ${PID}"
 
+# FileSystemWatcher で指定ディレクトリの変更を検知する。
+$PathToWatch = Get-MyPicturesFolderPath
+$Watcher = New-Object System.IO.FileSystemWatcher
+$Watcher.Path = $PathToWatch
+$Watcher.EnableRaisingEvents = $true
+Register-ObjectEvent $Watcher Created -SourceIdentifier FileCreated -Action { Write-CustomHost "Action: Created"; Update-AllCustomPanels: } | Out-Null
+Register-ObjectEvent $Watcher Changed -SourceIdentifier FileChanged -Action { Write-CustomHost "Action: Changed"; Update-AllCustomPanels; } | Out-Null
+Register-ObjectEvent $Watcher Deleted -SourceIdentifier FileDeleted -Action { Write-CustomHost "Action: Deleted"; Update-AllCustomPanels; } | Out-Null
+Register-ObjectEvent $Watcher Renamed -SourceIdentifier FileRenamed -Action { Write-CustomHost "Action: Renamed"; Update-AllCustomPanels; } | Out-Null
+
+# FileSystemWatcher に加えて、タイマーで定期的に変更を検知する。
+# 別のプロセスがピクチャ・ファイルに変更を加えるとき、FileSystemWatcher がイベントを通知するタイミングが、
+# ファイルを書き込み中か、ファイルの書き込み後のクローズ処理か、仕様から判断できなかったため。
+# 実装として、少なくとも1回のピクチャ・ファイルの保存で、複数回の Changed が通知されたことがある。
 $Timer = New-ViewerTimer
 $Timer.Start()
 
