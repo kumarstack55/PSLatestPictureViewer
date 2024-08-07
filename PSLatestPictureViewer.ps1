@@ -1,28 +1,28 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 
 # 定数
-$InitialFormWidth = 1024
-$InitialFormHeight = 768
-$MiniThumbnailWidth = 200
-$MiniThumbnailHeight = 100
-$IntervalInMilliseconds = 5000
-$NumberOfPicturesToDisplay = 1+20
-$LabelTextNoInfo = "(no info)"
+[int32]$InitialFormWidth = 1024
+[int32]$InitialFormHeight = 768
+[int32]$MiniThumbnailWidth = 200
+[int32]$MiniThumbnailHeight = 100
+[int32]$IntervalInMilliseconds = 5000
+[int32]$NumberOfPicturesToDisplay = 1+20
+[string]$LabelTextNoInfo = "(no info)"
 
 # 変数
 [Pictures]$global:Pictures = $null
-$global:CustomRecords = $null
-$global:Form = $null
-$global:LastPositionX = $null
-$global:LastPositionY = $null
-$global:LastWidth = $null
-$global:LastHeight = $null
+[System.Collections.Generic.List[CustomRecord]]$global:CustomRecords = $null
+[System.Windows.Forms.Form]$global:Form = $null
+[System.Nullable[int32]]$global:LastPositionX = $null
+[System.Nullable[int32]]$global:LastPositionY = $null
+[System.Nullable[int32]]$global:LastWidth = $null
+[System.Nullable[int32]]$global:LastHeight = $null
 
 # Drawing.Image の処理を関数で定義する。
 # PowerShell のクラス内で Add-Type した型を利用できないため。
 # https://stackoverflow.com/questions/34625440
 function New-ImageFromMemoryStream {
-    param([Parameter(Mandatory)]$MemoryStream)
+    param([Parameter(Mandatory)][System.IO.MemoryStream]$MemoryStream)
     [System.Drawing.Image]::FromStream($MemoryStream)
 }
 
@@ -156,7 +156,7 @@ class CustomRecord {
     $Label
     $PictureBox
     $Button
-    $Block
+    [scriptblock]$Block
 }
 
 function Get-MyPicturesFolderPath {
