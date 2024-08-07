@@ -317,13 +317,7 @@ function Update-AllCustomPanels {
                 $PictureBox.Image = $Picture.Image
             } catch {
                 Write-Host $_.ScriptStackTrace
-
                 $global:Pictures.RemoveLatestItemFromCache()
-
-                Write-CustomHost "Set NeedRestarting is true."
-                $global:NeedRestarting = $true
-
-                $global:Form.Close()
             }
 
             $Button.Enabled = $true
@@ -415,13 +409,8 @@ Register-ObjectEvent $Watcher Renamed -SourceIdentifier FileRenamed -Action { Wr
 $Timer = New-ViewerTimer
 $Timer.Start()
 
-$global:NeedRestarting = $true
-while ($global:NeedRestarting) {
-    Write-CustomHost "Starting Application..."
-    $global:NeedRestarting = $false
-    Invoke-Application
-    Write-CustomHost "Terminated."
-    Start-Sleep 1
-}
+Write-CustomHost "Starting Application..."
+Invoke-Application
+Write-CustomHost "Terminated."
 
 [System.Windows.Forms.Application]::Exit()
