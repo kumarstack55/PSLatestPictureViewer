@@ -11,7 +11,7 @@ $LabelTextNoInfo = "(no info)"
 
 # 変数
 [Pictures]$global:Pictures = $null
-$global:CompornentRecords = $null
+$global:CustomRecords = $null
 $global:Form = $null
 $global:LastPositionX = $null
 $global:LastPositionY = $null
@@ -150,7 +150,7 @@ class Pictures {
 }
 
 # 画面を構成するピクチャを含む各種オブジェクトのレコード
-class CompornentRecord {
+class CustomRecord {
     [Picture]$Picture
     $Index
     $Panel
@@ -175,14 +175,14 @@ function Get-LatestItemsInPictures {
 }
 
 function New-CustomPanelControl {
-    param([Parameter(Mandatory)][CompornentRecord]$CompornentRecord)
+    param([Parameter(Mandatory)][CustomRecord]$CustomRecord)
 
-    $CompornentRecord.Panel = New-Object System.Windows.Forms.Panel
-    $CompornentRecord.PictureBox = New-Object System.Windows.Forms.PictureBox
-    $CompornentRecord.Label = New-Object System.Windows.Forms.Label
-    $CompornentRecord.Button = New-Object System.Windows.Forms.Button
+    $CustomRecord.Panel = New-Object System.Windows.Forms.Panel
+    $CustomRecord.PictureBox = New-Object System.Windows.Forms.PictureBox
+    $CustomRecord.Label = New-Object System.Windows.Forms.Label
+    $CustomRecord.Button = New-Object System.Windows.Forms.Button
 
-    $c = $CompornentRecord.Panel
+    $c = $CustomRecord.Panel
     $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
     $c.Controls.Add(
         (&{
@@ -192,7 +192,7 @@ function New-CustomPanelControl {
             $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
             $c.Controls.Add(
                 (&{
-                    $c = $CompornentRecord.PictureBox
+                    $c = $CustomRecord.PictureBox
                     $c.Dock = [System.Windows.Forms.DockStyle]::Fill
                     $c.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
                     $c
@@ -200,7 +200,7 @@ function New-CustomPanelControl {
             )
             $c.Controls.Add(
                 (&{
-                    $c = $CompornentRecord.Label
+                    $c = $CustomRecord.Label
                     $c.Dock = [System.Windows.Forms.DockStyle]::Top
                     $c.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
                     $c.BackColor = [System.Drawing.Color]::AliceBlue
@@ -210,11 +210,11 @@ function New-CustomPanelControl {
             )
             $c.Controls.Add(
                 (&{
-                    $c = $CompornentRecord.Button
+                    $c = $CustomRecord.Button
                     $c.Text = "画像をごみ箱に入れる"
                     $c.Dock = [System.Windows.Forms.DockStyle]::Bottom
                     $c.Enabled = $false
-                    $c.Add_Click($CompornentRecord.Block)
+                    $c.Add_Click($CustomRecord.Block)
                     $c
                 })
             )
@@ -241,9 +241,9 @@ function New-ViewerForm {
         $Form.Height = $InitialFormHeight
     }
 
-    $CompornentRecord = $global:CompornentRecords[0]
+    $CustomRecord = $global:CustomRecords[0]
     $Form.Controls.Add( (&{
-            $c = New-CustomPanelControl -CompornentRecord $CompornentRecord
+            $c = New-CustomPanelControl -CustomRecord $CustomRecord
             $c.Dock = [System.Windows.Forms.DockStyle]::Fill
             $c
         })
@@ -256,10 +256,10 @@ function New-ViewerForm {
             $c.BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
             $c.WrapContents = $false
             foreach ($Index in 1 .. ($NumberOfPicturesToDisplay - 1)) {
-                $CompornentRecord = $global:CompornentRecords[$Index]
+                $CustomRecord = $global:CustomRecords[$Index]
                 $c.Controls.Add(
                     (&{
-                        $c = New-CustomPanelControl -CompornentRecord $CompornentRecord
+                        $c = New-CustomPanelControl -CustomRecord $CustomRecord
                         $c.Width = $MiniThumbnailWidth
                         $c.Height = $MiniThumbnailHeight
                         $c
@@ -295,14 +295,14 @@ function Update-AllCustomPanels {
 
     # 画像、ラベルを設定する。
     foreach ($Index in 0 .. ($NumberOfPicturesToDisplay - 1)) {
-        $CompornentRecord = $global:CompornentRecords[$Index]
-        $PictureBox = $CompornentRecord.PictureBox
-        $Label = $CompornentRecord.Label
-        $Button = $CompornentRecord.Button
+        $CustomRecord = $global:CustomRecords[$Index]
+        $PictureBox = $CustomRecord.PictureBox
+        $Label = $CustomRecord.Label
+        $Button = $CustomRecord.Button
         if ($Index -lt $Items.Count) {
             $Item = $Items[$Index]
             $Picture = $global:Pictures.GetPicture($Item)
-            $CompornentRecord.Picture = $Picture
+            $CustomRecord.Picture = $Picture
 
             $LabelText = "{0}: {1}" -f ($Index + 1), $Picture.FileName
             $Label.Text = $LabelText
@@ -338,7 +338,7 @@ function New-ViewerTimer {
 }
 
 function Invoke-Application {
-    $global:CompornentRecords = [System.Collections.Generic.List[CompornentRecord]]::new()
+    $global:CustomRecords = [System.Collections.Generic.List[CustomRecord]]::new()
 
     # 表示する画像数より十分に大きい数をキャッシュ対象とする。
     $CacheSize = [System.Math]::Ceiling($NumberOfPicturesToDisplay * 1.5)
@@ -351,9 +351,9 @@ function Invoke-Application {
         $Block = {
             Write-CustomHost "block is invoked. (Index:$Index)"
             $Shell = New-Object -ComObject Shell.Application
-            $CompornentRecord = $global:CompornentRecords[$Index]
+            $CustomRecord = $global:CustomRecords[$Index]
 
-            $Picture = $CompornentRecord.Picture
+            $Picture = $CustomRecord.Picture
             if ($null -eq $Picture) {
                 Write-CustomHost "Picture is null."
                 return
@@ -375,12 +375,12 @@ function Invoke-Application {
         }
         $Closure = $Block.GetNewClosure()
 
-        $CompornentRecord = [CompornentRecord]::new()
-        $CompornentRecord.Picture = $null
-        $CompornentRecord.Label = $null
-        $CompornentRecord.Index = $Index
-        $CompornentRecord.Block = $Closure
-        $global:CompornentRecords.Add($CompornentRecord)
+        $CustomRecord = [CustomRecord]::new()
+        $CustomRecord.Picture = $null
+        $CustomRecord.Label = $null
+        $CustomRecord.Index = $Index
+        $CustomRecord.Block = $Closure
+        $global:CustomRecords.Add($CustomRecord)
     }
 
     $global:Form = New-ViewerForm
