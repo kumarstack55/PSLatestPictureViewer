@@ -287,8 +287,8 @@ function New-ViewerForm {
     $Form
 }
 
-function Invoke-Tick {
-    Write-CustomHost "Invoke-Tick is called."
+function Update-AllCustomPanels {
+    Write-CustomHost "Update-AllCustomPanels is called."
 
     # 最近の画像を最大 $NumberOfPicturesToDisplay 件、得る。
     $Items = Get-LatestItemsInPictures -Count $NumberOfPicturesToDisplay
@@ -333,7 +333,7 @@ function Invoke-Tick {
 function New-ViewerTimer {
     $Timer = New-Object System.Windows.Forms.Timer
     $Timer.Interval = $IntervalInMilliseconds
-    $Timer.Add_Tick({ Invoke-Tick })
+    $Timer.Add_Tick({ Update-AllCustomPanels })
     $Timer
 }
 
@@ -386,7 +386,7 @@ function Invoke-Application {
     $global:Form = New-ViewerForm
 
     # フォームを表示する前に、画像を更新しておく。
-    Invoke-Tick
+    Update-AllCustomPanels
 
     [System.Windows.Forms.Application]::Run($Form)
 }
