@@ -315,12 +315,13 @@ function Update-AllCustomPanels {
             # 期待した動作とならない場合は Form を作り直す。
             try {
                 $PictureBox.Image = $Picture.Image
+                $Button.Enabled = $true
             } catch {
                 Write-Host $_.ScriptStackTrace
+                $Button.Enabled = $false
+                $PictureBox.Image = $null
                 $global:Pictures.RemoveLatestItemFromCache()
             }
-
-            $Button.Enabled = $true
         } else {
             $PictureBox.Image = $null
             $Label.Text = ""
