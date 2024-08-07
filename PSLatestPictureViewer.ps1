@@ -160,10 +160,15 @@ class CustomRecord {
     $Block
 }
 
+function Get-MyPicturesFolderPath {
+    param()
+    [Environment]::GetFolderPath("MyPictures")
+}
+
 function Get-LatestItemsInPictures {
     param([int]$Count = -1)
 
-    $PicturesFolderPath = [Environment]::GetFolderPath("MyPictures")
+    $PicturesFolderPath = Get-MyPicturesFolderPath
     $FileItems = Get-ChildItem -LiteralPath $PicturesFolderPath -File
     $ImageItems = $FileItems | Where-Object { $_ -match '^.*\.(jpg|png|bmp)$' }
     $SortedItems = $ImageItems | Sort-Object -Property LastWriteTime -Descending
