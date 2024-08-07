@@ -5,7 +5,7 @@ $InitialFormWidth = 1024
 $InitialFormHeight = 768
 $MiniThumbnailWidth = 200
 $MiniThumbnailHeight = 100
-$IntervalInMilliseconds = 2000
+$IntervalInMilliseconds = 5000
 $NumberOfPicturesToDisplay = 1+20
 $LabelTextNoInfo = "(no info)"
 
