@@ -398,10 +398,10 @@ $Timer.Start()
 
 $global:NeedRestarting = $true
 while ($global:NeedRestarting) {
-    Write-Host "Starting Application..."
+    Write-CustomHost "Starting Application..."
     $global:NeedRestarting = $false
     Invoke-Application
-    Write-Host "Terminated."
+    Write-CustomHost "Terminated."
     Start-Sleep 1
 }
 
