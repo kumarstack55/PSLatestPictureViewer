@@ -246,7 +246,8 @@ function New-ViewerForm {
     }
 
     $CustomRecord = $global:CustomRecords[0]
-    $Form.Controls.Add( (&{
+    $Form.Controls.Add(
+        (&{
             $c = New-CustomPanelControl -CustomRecord $CustomRecord
             $c.Dock = [System.Windows.Forms.DockStyle]::Fill
             $c
