@@ -330,7 +330,10 @@ function Update-AllCustomPanels {
 function New-ViewerTimer {
     $Timer = New-Object System.Windows.Forms.Timer
     $Timer.Interval = $IntervalInMilliseconds
-    $Timer.Add_Tick({ Write-CustomHost "Interval Timer: Calling Update-AllCustomPanels..."; Update-AllCustomPanels; })
+    $Timer.Add_Tick({
+        Write-CustomHost "Interval Timer: Calling Update-AllCustomPanels..."
+        Update-AllCustomPanels
+    })
     $Timer
 }
 
