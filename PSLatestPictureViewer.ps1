@@ -152,7 +152,6 @@ class Pictures {
 # 画面を構成するピクチャを含む各種オブジェクトのレコード
 class CustomRecord {
     [Picture]$Picture
-    $Index
     $Panel
     $Label
     $PictureBox
@@ -376,7 +375,6 @@ function Invoke-Application {
         $CustomRecord = [CustomRecord]::new()
         $CustomRecord.Picture = $null
         $CustomRecord.Label = $null
-        $CustomRecord.Index = $Index
         $CustomRecord.Block = $Closure
         $global:CustomRecords.Add($CustomRecord)
     }
